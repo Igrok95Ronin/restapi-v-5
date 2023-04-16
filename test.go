@@ -1,30 +1,102 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"strconv"
+)
 
-type Point struct {
-	X, Y int
+type Calculator struct {
+	fn, sn int
 }
 
-func moviePointPtr(p *Point, x, y int) {
-	p.X += x
-	p.Y += y
+func (f *Calculator) Add(fn, sn int) int {
+	f.fn = fn
+	f.sn = sn
+	return f.fn + f.sn
 }
 
-func (p *Point) movePointPtr2(x, y int) {
-	p.X += x
-	p.Y += y
+func (s *Calculator) Subtract(fn, sn int) int {
+	s.fn = fn
+	s.sn = sn
+	return s.fn - s.sn
+}
+func (m *Calculator) Multiply(fn, sn int) int {
+	m.fn = fn
+	m.sn = sn
+	return m.fn * m.sn
+}
+
+func (d *Calculator) Divide(fn, sn int) int {
+	d.fn = fn
+	d.sn = sn
+	return d.fn / d.sn
+}
+
+type iCalculator interface {
+	Add(fn, sn int) int
+	Subtract(fn, sn int) int
+	Multiply(fn, sn int) int
+	Divide(fn, sn int) int
 }
 
 func main() {
-	p := Point{
-		1,
-		2,
+	var (
+		n1, n2, sign string
+		i            iCalculator
+	)
+
+	f := Calculator{}
+	i = &f
+
+	s := Calculator{}
+	i = &s
+
+	m := Calculator{}
+	i = &m
+
+	d := Calculator{}
+	i = &d
+
+	fmt.Print("Введите первое число: ")
+	fmt.Scanln(&n1)
+	fmt.Print("Введите второе число: ")
+	fmt.Scanln(&n2)
+
+	fn1, err := strconv.Atoi(n1)
+	if err != nil {
+		log.Println("Только целочисленные значения")
+		log.Fatal(err)
 	}
-	fmt.Println(p)
+	sn2, err := strconv.Atoi(n2)
+	if err != nil {
+		log.Println("Только целочисленные значения")
+		log.Fatal(err)
+	}
 
-	moviePointPtr(&p, 1, 1)
-	p.movePointPtr2(1, 1)
+	fmt.Print("Введите оператор (+,-,*,/): ")
+	fmt.Scanln(&sign)
 
-	fmt.Println(p)
+	switch sign {
+	case "+":
+		result := i.Add(fn1, sn2)
+		fmt.Println(result)
+	case "-":
+		result := i.Subtract(fn1, sn2)
+		fmt.Println(result)
+	case "*":
+		result := i.Multiply(fn1, sn2)
+		fmt.Println(result)
+	case "/":
+		if fn1 == 0 || sn2 == 0 {
+			log.Println("Делить на ноль нельзя")
+			return
+		} else {
+			result := i.Divide(fn1, sn2)
+			fmt.Println(result)
+		}
+	default:
+		log.Println("Допустим только один из следующих оператор (+,-,*,/)")
+		return
+	}
 }
