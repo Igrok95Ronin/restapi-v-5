@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
@@ -8,6 +9,11 @@ import (
 	"net/http"
 	"strconv"
 )
+
+type PageData struct {
+	Title   string
+	Snippet []string
+}
 
 func home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
@@ -24,14 +30,48 @@ func home(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal Server Error", 500)
+
 		return
 	}
-	err = ts.Execute(w, nil)
+
+	//
+	db, err := sql.Open("mysql", "root:@/snippetbox")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT title FROM snippets")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var snippets []string
+	for rows.Next() {
+		var title string
+		err := rows.Scan(&title)
+		if err != nil {
+			log.Fatal(err)
+		}
+		snippets = append(snippets, title)
+	}
+	//
+	data := PageData{
+		Title:   "Домашняя страница",
+		Snippet: snippets,
+	}
+	err = ts.Execute(w, data)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal Server Error", 500)
 		return
 	}
+}
+
+type PageAbout struct {
+	Title       string
+	SnipContent []string
 }
 
 func about(w http.ResponseWriter, r *http.Request) {
@@ -46,12 +86,44 @@ func about(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", 500)
 		return
 	}
-	err = ts.Execute(w, nil)
+
+	db, err := sql.Open("mysql", "root@/snippetbox")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT content FROM snippets")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var snipContents []string
+	for rows.Next() {
+		var content string
+		err := rows.Scan(&content)
+		if err != nil {
+			log.Fatal(err)
+		}
+		snipContents = append(snipContents, content)
+	}
+
+	data := PageAbout{
+		"Данные с базы О нас",
+		snipContents,
+	}
+
+	err = ts.Execute(w, data)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal Server Error", 500)
 		return
 	}
+}
+
+type PageAllContacts struct {
+	Id    int
+	Title string
 }
 
 func contacts(w http.ResponseWriter, r *http.Request) {
@@ -66,12 +138,41 @@ func contacts(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", 500)
 		return
 	}
-	err = ts.Execute(w, nil)
+
+	db, err := sql.Open("mysql", "root@/snippetbox")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id, title FROM snippets")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var data []PageAllContacts
+	for rows.Next() {
+		var id int
+		var title string
+
+		err := rows.Scan(&id, &title)
+		if err != nil {
+			log.Fatal(err)
+		}
+		item := PageAllContacts{id, title}
+		data = append(data, item)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	err = ts.Execute(w, data)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal Server Error", 500)
 		return
 	}
+
 }
 
 func showSnippet(w http.ResponseWriter, r *http.Request) {

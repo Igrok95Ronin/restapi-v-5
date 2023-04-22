@@ -1,27 +1,20 @@
 package main
 
 import (
-	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
 )
 
-func main() {
-	db, err := sql.Open("mysql", "root:@/mytestbase")
-	if err != nil {
-		log.Fatal(err)
+func multiplication(num int) []int {
+	results := []int{}
+	for i := 1; i <= 10; i++ {
+		result := num * i
+		results = append(results, result)
 	}
-	defer db.Close()
+	return results
+}
 
-	_, err = db.Exec(`
-        CREATE TABLE users (
-            id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(30) NOT NULL,
-            email VARCHAR(50) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    `)
-	if err != nil {
-		log.Fatal(err)
-	}
+func main() {
+	ints := multiplication(2)
+	fmt.Println(ints)
 }
